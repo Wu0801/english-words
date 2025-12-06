@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词发音学习</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .word-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .word-card {
+            background: linear-gradient(to right, #f8f9fa, #ffffff);
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 150px;
+            justify-content: space-between;
+        }
+        
+        .word-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #3498db;
+        }
+        
+        .word-card.playing {
+            background: linear-gradient(to right, #e3f2fd, #f0f8ff);
+            border-color: #2980b9;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
+        }
+        
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .word-text {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .phonetic {
+            color: #7f8c8d;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        
+        .meaning {
+            color: #2c3e50;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            flex-grow: 1;
+        }
+        
+        .play-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            margin-top: auto;
+        }
+        
+        .play-btn:hover {
+            background: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        .play-btn i {
+            margin-right: 8px;
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+            border-left: 4px solid #3498db;
+        }
+        
+        .instructions p {
+            margin: 10px 0;
+        }
+        
+        .instructions i {
+            color: #3498db;
+            margin-right: 8px;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .volume-slider {
+            width: 150px;
+            accent-color: #3498db;
+        }
+        
+        .search-box {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #3498db;
+        }
+        
+        .stats {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .word-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .word-card {
+                height: 140px;
+                padding: 15px;
+            }
+            
+            .word-text {
+                font-size: 1.5em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .word-list {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-book"></i> 英语单词发音学习</h1>
+        <p class="subtitle">点击单词卡片即可听到标准发音</p>
+        
+        <div class="stats">
+            当前共有 <span id="wordCount">0</span> 个单词
+        </div>
+        
+        <div class="search-box">
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索单词或中文意思...">
+        </div>
+        
+        <div class="volume-control">
+            <span><i class="fas fa-volume-up"></i> 音量：</span>
+            <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1">
+        </div>
+        
+        <div class="word-list" id="wordList">
+            <!-- 单词卡片将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="instructions">
+            <p><i class="fas fa-lightbulb"></i> 使用提示：</p>
+            <p>1. 点击单词卡片即可播放发音</p>
+            <p>2. 发音时卡片会有高亮效果</p>
+            <p>3. 使用搜索框快速查找单词</p>
+            <p>4. 可调节音量大小</p>
+            <p>5. 支持重复播放，加强记忆</p>
+        </div>
+    </div>
+
+    <script>
+        // 完整的单词数据
+        const words = [
+            {
+                word: "sugar",
+                phonetic: "/ˈʃʊɡər/",
+                meaning: "糖"
+            },
+            {
+                word: "meat",
+                phonetic: "/miːt/",
+                meaning: "肉"
+            },
+            {
+                word: "onion",
+                phonetic: "/ˈʌnjən/",
+                meaning: "洋葱"
+            },
+            {
+                word: "sandwich",
+                phonetic: "/ˈsænwɪtʃ/",
+                meaning: "三明治"
+            },
+            {
+                word: "main course",
+                phonetic: "/ˌmeɪn ˈkɔːrs/",
+                meaning: "主菜"
+            },
+            {
+                word: "hungry",
+                phonetic: "/ˈhʌŋɡri/",
+                meaning: "饥饿的"
+            },
+            {
+                word: "fried",
+                phonetic: "/fraɪd/",
+                meaning: "油炸的"
+            },
+            {
+                word: "thirsty",
+                phonetic: "/ˈθɜːrsti/",
+                meaning: "口渴的"
+            },
+            {
+                word: "grilled",
+                phonetic: "/ɡrɪld/",
+                meaning: "烤的"
+            },
+            {
+                word: "fridge",
+                phonetic: "/frɪdʒ/",
+                meaning: "冰箱"
+            },
+            {
+                word: "vegetable",
+                phonetic: "/ˈvedʒtəbl/",
+                meaning: "蔬菜"
+            },
+            {
+                word: "grape",
+                phonetic: "/ɡreɪp/",
+                meaning: "葡萄"
+            },
+            {
+                word: "steak",
+                phonetic: "/steɪk/",
+                meaning: "牛排"
+            },
+            {
+                word: "waitress",
+                phonetic: "/ˈweɪtrəs/",
+                meaning: "女服务员"
+            },
+            {
+                word: "fruit",
+                phonetic: "/fruːt/",
+                meaning: "水果"
+            }
+        ];
+        
+        // 初始化语音合成
+        const synth = window.speechSynthesis;
+        let currentUtterance = null;
+        let volume = 1;
+        
+        // 生成单词卡片
+        function generateWordCards(filteredWords = words) {
+            const wordList = document.getElementById('wordList');
+            wordList.innerHTML = '';
+            
+            filteredWords.forEach((wordData, index) => {
+                const wordCard = document.createElement('div');
+                wordCard.className = 'word-card';
+                wordCard.dataset.word = wordData.word;
+                
+                wordCard.innerHTML = `
+                    <div>
+                        <div class="word-text">${wordData.word}</div>
+                        <div class="phonetic">${wordData.phonetic}</div>
+                        <div class="meaning">${wordData.meaning}</div>
+                    </div>
+                    <button class="play-btn" onclick="speakWord('${wordData.word}')">
+                        <i class="fas fa-play"></i> 播放发音
+                    </button>
+                `;
+                
+                // 点击卡片任意位置播放
+                wordCard.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'BUTTON') {
+                        speakWord(wordData.word);
+                    }
+                });
+                
+                wordList.appendChild(wordCard);
+            });
+            
+            // 更新单词数量
+            document.getElementById('wordCount').textContent = filteredWords.length;
+        }
+        
+        // 发音函数
+        function speakWord(wordText) {
+            // 停止当前发音
+            if (currentUtterance) {
+                synth.cancel();
+            }
+            
+            // 找到对应的单词数据
+            const wordData = words.find(w => w.word === wordText);
+            if (!wordData) return;
+            
+            // 移除所有正在播放的样式
+            document.querySelectorAll('.word-card').forEach(card => {
+                card.classList.remove('playing');
+            });
+            
+            // 高亮当前单词卡片
+            const currentCard = document.querySelector(`.word-card[data-word="${wordText}"]`);
+            currentCard.classList.add('playing');
+            
+            // 创建发音
+            currentUtterance = new SpeechSynthesisUtterance(wordText);
+            
+            // 设置发音参数
+            currentUtterance.lang = 'en-US';
+            currentUtterance.rate = 0.8; // 语速
+            currentUtterance.pitch = 1; // 音调
+            currentUtterance.volume = volume;
+            
+            // 发音结束后的回调
+            currentUtterance.onend = function() {
+                currentCard.classList.remove('playing');
+                currentUtterance = null;
+            };
+            
+            currentUtterance.onerror = function() {
+                currentCard.classList.remove('playing');
+                alert('发音出错，请确保浏览器支持语音合成功能');
+                currentUtterance = null;
+            };
+            
+            // 开始发音
+            synth.speak(currentUtterance);
+        }
+        
+        // 音量控制
+        document.querySelector('.volume-slider').addEventListener('input', function(e) {
+            volume = parseFloat(e.target.value);
+            if (currentUtterance) {
+                currentUtterance.volume = volume;
+            }
+        });
+        
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                generateWordCards(words);
+                return;
+            }
+            
+            const filteredWords = words.filter(wordData => {
+                return (
+                    wordData.word.toLowerCase().includes(searchTerm) ||
+                    wordData.phonetic.toLowerCase().includes(searchTerm) ||
+                    wordData.meaning.toLowerCase().includes(searchTerm)
+                );
+            });
+            
+            generateWordCards(filteredWords);
+        });
+        
+        // 页面加载时生成单词卡片
+        window.addEventListener('DOMContentLoaded', () => {
+            generateWordCards();
+            
+            // 按字母顺序排列单词
+            words.sort((a, b) => a.word.localeCompare(b.word));
+        });
+        
+        // 页面关闭前停止发音
+        window.addEventListener('beforeunload', function() {
+            if (synth.speaking) {
+                synth.cancel();
+            }
+        });
+        
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // 按空格键停止当前发音
+            if (e.code === 'Space' && synth.speaking) {
+                e.preventDefault();
+                synth.cancel();
+                document.querySelectorAll('.word-card').forEach(card => {
+                    card.classList.remove('playing');
+                });
+            }
+            
+            // 按ESC键清空搜索框
+            if (e.code === 'Escape') {
+                document.getElementById('searchInput').value = '';
+                generateWordCards(words);
+            }
+        });
+    </script>
+</body>
+</html>
